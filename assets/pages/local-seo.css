@@ -1,0 +1,37 @@
+/* local-seo.html: editorial long-read. Tokens only, no raw sizes/colours. */
+
+/* ---------- page head: split4 chapter doubling as the hero ---------- */
+.ls-head{
+  position:relative; z-index:1;
+  min-height:100vh; min-height:100svh;
+  display:flex; align-items:center; justify-content:center;
+  padding:calc(var(--nav-h) + var(--space-8)) var(--gutter) var(--space-8);
+}
+.ls-head-inner{max-width:var(--col-text); text-align:center}
+.ls-head-inner .lbl{margin-bottom:var(--space-4)}
+.ls-head-inner h1{margin-top:var(--space-2)}
+.ls-head-inner .lead{margin:var(--space-5) auto 0; max-width:var(--measure-lead)}
+
+/* ---------- numbered method list (not links: plain steps, unlike the homepage service rows) ---------- */
+.method{list-style:none; margin:var(--space-7) 0 0; padding:0; border-top:1px solid var(--hair)}
+.method li{border-bottom:1px solid var(--hair); padding:var(--space-6) 0}
+.method h3{margin-top:var(--space-2)}
+.method p{margin-top:var(--space-3); color:var(--muted)}
+@media (min-width:821px){
+  .method li{display:grid; grid-template-columns:14rem 1fr; column-gap:var(--space-6)}
+  .method .n{grid-column:1; grid-row:1 / span 2; align-self:start}
+  .method h3{grid-column:2; grid-row:1; margin-top:0}
+  .method p{grid-column:2; grid-row:2}
+}
+
+/* ---------- pull quote ---------- */
+blockquote{
+  margin:var(--space-6) 0; padding:0 0 0 var(--space-5);
+  border-left:2px solid var(--blue-light);
+  font-family:var(--font-text); font-weight:500; font-size:var(--step-1); line-height:1.4;
+  letter-spacing:-.01em; color:var(--paper); max-width:var(--measure-lead);
+}
+
+@media (max-width:640px){
+  .ls-head{padding-top:calc(var(--nav-h) + var(--space-6))}
+}

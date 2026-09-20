@@ -1,0 +1,163 @@
+/* =========================================================================
+   BLOG INDEX (blog.html) — page-specific, tokens only, no raw values
+   ========================================================================= */
+
+.page-head-blog{padding-bottom:var(--space-6)}
+
+.band-rule{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+  padding-bottom:var(--space-3); border-bottom:1px solid var(--hair); margin-bottom:var(--space-5);
+}
+.band-rule .lbl{
+  font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+}
+
+/* dated index list: one row per post, title always visible, no card grid */
+.postledger{margin:var(--space-7) 0 0; padding:0; border-top:1px solid var(--hair)}
+.postledger > [role="listitem"]{border-bottom:1px solid var(--hair)}
+
+.postrow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  grid-template-areas:
+    "date date"
+    "body ar";
+  align-items:start;
+  column-gap:var(--space-5);
+  row-gap:var(--space-2);
+  padding:var(--space-6) 0;
+  text-decoration:none;
+  color:inherit;
+}
+.pdate{
+  grid-area:date;
+  font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+}
+.pbody{grid-area:body; display:block; min-width:0}
+.ptag{
+  display:block; font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--blue-light); margin-bottom:var(--space-2);
+}
+.postrow h3{
+  margin:0; font-size:var(--step-2); line-height:1.2; letter-spacing:-.015em;
+  color:var(--paper); max-width:var(--measure);
+}
+.postrow p{
+  margin:var(--space-2) 0 0; color:var(--muted); max-width:var(--measure);
+}
+.postrow .ar{
+  grid-area:ar; align-self:center; color:var(--blue-light); font-size:var(--step-1);
+  line-height:1; transition:transform .2s ease;
+}
+.postrow:hover .ar,.postrow:focus-visible .ar{transform:translateX(var(--space-2))}
+.postrow:focus-visible{outline:2px solid var(--blue-light); outline-offset:var(--space-2); border-radius:var(--radius-1)}
+
+/* the last three v3 posts carried a real screenshot: keep it, framed, never as a background-crop card */
+.postrow--figured{
+  grid-template-columns:1fr auto;
+  grid-template-areas:
+    "date date"
+    "body ar"
+    "fig fig";
+}
+.pfig{grid-area:fig; margin-top:var(--space-4); display:block; overflow:hidden; border-radius:var(--radius-3)}
+.pfig img{display:block; width:100%; height:auto; aspect-ratio:1880/1255}
+
+@media (min-width:700px){
+  .postrow{
+    grid-template-columns:10rem 1fr auto;
+    grid-template-areas:"date body ar";
+    column-gap:var(--space-6);
+  }
+  .postrow--figured{
+    grid-template-columns:10rem 1fr auto;
+    grid-template-areas:
+      "date body ar"
+      "fig fig fig";
+  }
+  .pfig{max-width:26rem}
+}
+
+.postledger > [role="listitem"]:last-child .postrow{padding-bottom:var(--space-7)}
+
+
+/* =========================================================================
+   ARTICLE STYLES (reusable) — for the blog-post wave (blog-*.html)
+   Built here so the later wave can lift this block wholesale. All on tokens.
+   ========================================================================= */
+
+.article-head{
+  padding:calc(var(--nav-h) + var(--space-7)) 0 var(--space-6);
+  border-bottom:1px solid var(--hair);
+}
+.article-head .ptag{
+  display:block; font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--blue-light); margin-bottom:var(--space-4);
+}
+.article-head h1{
+  /* article titles are long sentences, so one step below a page h1 keeps them to 2-3 lines */
+  font-size:var(--step-4); line-height:1.08; letter-spacing:-.025em; max-width:var(--col-media);
+}
+.article-head .lead{margin-top:var(--space-5)}
+.article-head .byline{
+  display:flex; flex-wrap:wrap; gap:var(--space-2) var(--space-5); margin-top:var(--space-6);
+  font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+}
+
+/* banner image directly under the title, cropped wide like a banner, never a hero photo */
+.article-banner{
+  margin:var(--space-7) auto 0; overflow:hidden; border-radius:var(--radius-3);
+  border:1px solid var(--hair);
+}
+.article-banner img{display:block; width:100%; height:auto; aspect-ratio:16/7; object-fit:cover}
+.article-banner figcaption{
+  padding:var(--space-3) var(--space-5); margin:0; color:var(--muted); font-size:var(--step--1);
+}
+
+/* body copy at the reading measure */
+.article-body{max-width:var(--measure); padding:var(--space-8) 0}
+.article-body > *{max-width:var(--measure)}
+.article-body p{font-size:var(--step-0); line-height:1.6; color:var(--paper); margin:0 0 var(--space-5)}
+
+.article-body h2{
+  font-size:var(--step-3); line-height:1.15; letter-spacing:-.02em;
+  margin:var(--space-8) 0 var(--space-4);
+}
+.article-body h3{
+  font-size:var(--step-1); line-height:1.25; letter-spacing:-.01em;
+  margin:var(--space-6) 0 var(--space-3);
+}
+
+.article-body ul,.article-body ol{
+  margin:0 0 var(--space-5); padding-left:var(--space-6); color:var(--paper);
+}
+.article-body li{padding:var(--space-1) 0; line-height:1.6}
+.article-body li + li{margin-top:var(--space-1)}
+
+.article-body blockquote{
+  margin:var(--space-6) 0; padding:var(--space-2) 0 var(--space-2) var(--space-5);
+  border-left:2px solid var(--blue-light); color:var(--muted);
+  font-size:var(--step-1); line-height:1.5; font-style:italic;
+}
+.article-body blockquote p{margin:0}
+
+.article-body a{color:var(--blue-light); text-decoration:underline; text-underline-offset:.15em}
+.article-body a:focus-visible{outline:2px solid var(--blue-light); outline-offset:2px; border-radius:var(--radius-1)}
+
+/* related posts: a list, not a card grid, matching the index house rule */
+.related{
+  max-width:var(--col-media); margin:0 auto; padding:var(--space-7) 0 var(--space-9);
+  border-top:1px solid var(--hair);
+}
+.related h2{font-size:var(--step-2); line-height:1.2; margin:0 0 var(--space-5)}
+.related-list{list-style:none; margin:0; padding:0}
+.related-list li{border-top:1px solid var(--hair)}
+.related-list a{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);
+  min-height:var(--space-8); text-decoration:none; color:var(--paper); font-size:var(--step-0);
+}
+.related-list a:hover,.related-list a:focus-visible{color:var(--blue-light)}
+.related-list .ar{color:var(--blue-light)}

@@ -1,0 +1,46 @@
+/* website-design.html: showcase layout (screenshots as framed objects + a build timeline).
+   Tokens only, no raw font-size / spacing / colour. style.css stays read-only. */
+
+/* ---------- page head: split4 small, text beside the piece ---------- */
+.wd-head{
+  min-height:100vh; min-height:100svh;
+  display:flex; align-items:center;
+  position:relative; z-index:1;
+  padding:calc(var(--nav-h) + var(--space-8)) 0 var(--space-8);
+}
+.wd-head .band-rule{
+  display:flex; justify-content:space-between; gap:var(--space-4);
+  margin-bottom:var(--space-4);
+}
+.wd-head h1{margin-top:var(--space-2)}
+.wd-head .lead{margin-top:var(--space-5)}
+.wd-head .btn{margin-top:var(--space-6)}
+
+/* ---------- gallery: alternating framed screenshots, captions carry the timeline facts ---------- */
+.wd-gallery{margin-top:var(--space-7); display:flex; flex-direction:column; gap:var(--space-9)}
+.wd-shot{display:flex; flex-direction:column; gap:var(--space-4)}
+.wd-shot .lbl{color:var(--blue-light)}
+.wd-shot h3{margin-top:var(--space-1)}
+.wd-shot p{margin-top:var(--space-3); color:var(--muted)}
+@media (min-width:821px){
+  .wd-gallery{gap:var(--space-10)}
+}
+
+/* ---------- build timeline: a running vertical line, one step per row ---------- */
+.wd-timeline{margin:var(--space-7) 0 0; position:relative; padding-left:var(--space-8)}
+.wd-timeline::before{content:''; position:absolute; left:calc(var(--space-3) - 1px); top:var(--space-2); bottom:var(--space-2); width:2px; background:var(--hair)}
+.wd-step{position:relative; padding-bottom:var(--space-7)}
+.wd-step:last-child{padding-bottom:0}
+.wd-step::before{
+  content:''; position:absolute; left:calc(var(--space-8) * -1 + var(--space-1)); top:.3em;
+  width:var(--space-3); height:var(--space-3); border-radius:50%;
+  background:var(--stage-a); border:2px solid var(--blue-light);
+}
+.wd-step .n{display:block; margin-bottom:var(--space-2)}
+.wd-step p{margin-top:var(--space-2); color:var(--muted)}
+
+/* ---------- assemble interlude captions reuse .step-cap/.step-caps/.step-track from style.css ---------- */
+
+/* ---------- terms ledger already uses .ledger / .facts patterns from style.css; no overrides needed ---------- */
+
+@media (prefers-reduced-motion: reduce){ .wd-head{min-height:auto} }

@@ -1,0 +1,95 @@
+/* lead-generation.html: page-specific styles. Tokens only, no raw font-size/space/radius/colour.
+   Owned by the lead-generation page worker only. */
+
+/* ---------- page head ---------- */
+.lg-head{
+  position:relative; z-index:1;
+  min-height:70vh;
+  display:flex; align-items:center;
+  padding:calc(var(--nav-h) + var(--space-8)) 0 var(--space-8);
+}
+.lg-tag{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-4)}
+.lg-tag-idx{color:var(--muted)}
+.lg-head h1{margin-top:var(--space-4)}
+.lg-head .lead{margin-top:var(--space-4)}
+.cluster-flag{
+  display:inline-block;
+  margin-top:var(--space-6);
+  padding:var(--space-2) var(--space-4);
+  border:1px solid var(--hair);
+  border-radius:var(--radius-pill);
+  background:var(--panel);
+  color:var(--blue-light);
+  font-family:var(--font-mono);
+  font-size:var(--step--1);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+/* ---------- flow (outreach / past-customer sequences) ---------- */
+.flow{
+  list-style:none;
+  margin:var(--space-7) 0 0;
+  padding:0;
+  border-bottom:1px solid var(--hair);
+}
+.flow > li{
+  position:relative;
+  border-top:1px solid var(--hair);
+  padding:var(--space-6) 0 var(--space-6) var(--space-9);
+}
+.flow > li:first-child .flow-n{color:var(--blue-light)}
+.flow-n{
+  position:absolute;
+  left:0; top:var(--space-6);
+  font-family:var(--font-mono);
+  font-size:var(--step--1);
+  letter-spacing:.05em;
+  color:var(--muted);
+}
+.flow > li + li::before{
+  content:'';
+  position:absolute;
+  left:calc(var(--space-9) / 2 - 1px);
+  top:calc(-1 * var(--space-5));
+  width:2px; height:var(--space-5);
+  background:var(--hair);
+}
+.flow h3{margin-bottom:var(--space-2)}
+.flow p{margin-bottom:0}
+
+/* ---------- pull quote ---------- */
+.lg-quote{
+  margin:var(--space-6) 0;
+  padding:var(--space-2) 0 var(--space-2) var(--space-5);
+  border-left:2px solid var(--brass);
+  color:var(--paper);
+  font-size:var(--step-1);
+  line-height:1.4;
+  max-width:var(--measure-lead);
+  font-style:normal;
+}
+
+/* ---------- orbit interlude ---------- */
+.interlude--lg{--ih:130vh}
+.interlude--lg .band + .band{margin-top:var(--space-5)}
+.interlude--lg .band .lead{max-width:var(--col-text)}
+
+/* ---------- CTA ---------- */
+.lg-cta-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--space-6);
+  padding:var(--space-7) 0;
+  border-top:1px solid var(--hair);
+}
+.lg-cta-row h2{font-size:var(--step-3)}
+.lg-cta-row .lead{margin-top:var(--space-2)}
+
+@media (max-width:640px){
+  .lg-head{min-height:60vh}
+  .flow > li{padding-left:var(--space-8)}
+  .flow-n{top:var(--space-6)}
+}
