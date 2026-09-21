@@ -14,20 +14,20 @@
 
 :root{
   /* colour */
-  --stage-a:#05070F;
-  --stage-b:#0B1020;
-  --bar:#05060B;
-  --panel:#0E1220;
-  --panel-2:#1A1F2E;
-  --panel-3:#232A3D;
+  --stage-a:#ECEEF2;
+  --stage-b:#F7F8FA;
+  --bar:#E6E8ED;
+  --panel:#FFFFFF;
+  --panel-2:#F1F3F6;
+  --panel-3:#E4E7EC;
   --blue:#2757E6;
-  --blue-light:#6E93FF;
-  --paper:#F4EFE6;
-  --muted:#9AA3B8;            /* 8.0:1 on the stage, 7.4:1 on panels */
-  --hair:rgba(244,239,230,.14);
-  --edge:#6F788E;             /* control boundaries: at least 3:1 on the bar, the stage and panels */
-  --brass:#F2B84B;
-  --danger:#FF8B8B;
+  --blue-light:#1F47C9;
+  --paper:#0B1020;
+  --muted:#465065;            /* 7:1 or better on the light stage and on white panels */
+  --hair:rgba(11,16,32,.14);
+  --edge:#737B8F;             /* control boundaries: at least 3:1 on the bar, the stage and panels */
+  --brass:#8A5A00;
+  --danger:#B42318;
 
   /* TYPE SCALE. One modular scale, fluid between 360px and 1440px (Utopia method).
      Ratio 1.25 (major third) on phones so the big steps still fit a 375px line, opening to
@@ -91,8 +91,8 @@ html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
 body{
   margin:0;
   background:
-    radial-gradient(ellipse 50% 40% at 50% 32%, rgba(39,87,230,.09), transparent 68%),
-    var(--stage-a);
+    radial-gradient(ellipse 60% 48% at 50% 40%, rgba(255,255,255,.95), rgba(255,255,255,0) 70%),
+    linear-gradient(180deg, #B9BEC9 0%, #D5D9E0 30%, #ECEEF2 62%, #F7F8FA 100%);
   background-attachment:fixed;
   color:var(--paper);
   font-family:var(--font-text);
@@ -439,7 +439,7 @@ html:not(.js) .step-track{display:none}
   color:var(--paper);
   font-family:var(--font-text); font-size:var(--step-0); line-height:1.5;
 }
-.leadform ::placeholder{color:#8690A6; opacity:1}
+.leadform ::placeholder{color:#5F6A80; opacity:1}
 .leadform input:focus-visible,.leadform textarea:focus-visible{outline:2px solid var(--blue-light); outline-offset:1px}
 .leadform textarea{min-height:var(--space-10); resize:vertical}
 .leadform .hp{position:absolute; left:-9999px; opacity:0}
@@ -468,7 +468,7 @@ footer .base a:hover{color:var(--paper)}
 
 /* ---------- chapter progress rail: short bars ---------- */
 #rail{position:fixed; right:var(--space-5); top:50%; transform:translateY(-50%); z-index:40; display:flex; flex-direction:column; align-items:flex-end; gap:var(--space-3)}
-#rail .tick{width:var(--space-3); height:2px; background:rgba(244,239,230,.22); transition:background .25s ease, width .25s ease}
+#rail .tick{width:var(--space-3); height:2px; background:rgba(11,16,32,.22); transition:background .25s ease, width .25s ease}
 #rail .tick.on{background:var(--blue-light); width:var(--space-5)}
 @media (max-width:1100px){ #rail{display:none} }
 

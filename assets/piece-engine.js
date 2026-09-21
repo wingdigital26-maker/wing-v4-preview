@@ -264,10 +264,12 @@ function radialTex(stops){
   x.fillStyle=g; x.fillRect(0,0,256,256);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
-const glowTex = radialTex([[0,'rgba(46,84,210,1)'],[0.35,'rgba(30,56,150,0.45)'],[0.7,'rgba(16,30,84,0.12)'],[1,'rgba(10,20,60,0)']]);
+// LIGHT STAGE: the backdrop is a soft white halo behind the form, and the floor sprite is a contact shadow, not a glow
+const glowTex = radialTex([[0,'rgba(255,255,255,1)'],[0.4,'rgba(255,255,255,0.55)'],[0.75,'rgba(255,255,255,0.14)'],[1,'rgba(255,255,255,0)']]);
+const shadowTex = radialTex([[0,'rgba(14,22,48,0.9)'],[0.4,'rgba(14,22,48,0.4)'],[0.75,'rgba(14,22,48,0.1)'],[1,'rgba(14,22,48,0)']]);
 const glowMat = new THREE.SpriteMaterial({map:glowTex, transparent:true, opacity:0.2, depthWrite:false, depthTest:false, toneMapped:false});
 const glow = new THREE.Sprite(glowMat); glow.renderOrder = -2; scene.add(glow);
-const floorMat = new THREE.SpriteMaterial({map:glowTex, transparent:true, opacity:0.34, depthWrite:false, depthTest:false, toneMapped:false});
+const floorMat = new THREE.SpriteMaterial({map:shadowTex, transparent:true, opacity:0.34, depthWrite:false, depthTest:false, toneMapped:false});
 const floorGlow = new THREE.Sprite(floorMat); floorGlow.renderOrder = -1; scene.add(floorGlow);
 
 // ---------- plate records ----------
