@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -23,30 +24,7 @@
 {
  "@context": "https://schema.org",
  "@type": "ProfessionalService",
- "name": "Wing Digital",
- "url": "https://wingdigitalco.com/",
- "logo": "https://wingdigitalco.com/assets/wing-digital-logo.png",
- "slogan": "Automate your success",
- "address": {
- "@type": "PostalAddress",
- "addressLocality": "Plano",
- "addressRegion": "TX",
- "addressCountry": "US"
- },
- "areaServed": [
- {"@type": "City", "name": "Plano, TX"},
- {"@type": "City", "name": "Frisco, TX"},
- {"@type": "City", "name": "McKinney, TX"},
- {"@type": "City", "name": "Allen, TX"},
- {"@type": "City", "name": "Dallas, TX"},
- {"@type": "City", "name": "Fort Worth, TX"},
- {"@type": "City", "name": "Arlington, TX"},
- {"@type": "City", "name": "Irving, TX"},
- {"@type": "City", "name": "Garland, TX"},
- {"@type": "City", "name": "Richardson, TX"},
- {"@type": "City", "name": "Carrollton, TX"},
- {"@type": "City", "name": "Denton, TX"}
- ]
+ "@id": "https://wingdigitalco.com/#organization"
 }
 </script>
 <script type="application/ld+json">
@@ -56,11 +34,7 @@
  "name": "Content and Social",
  "description": "Content and social for DFW businesses: the stay-in-front part of your online presence. Posts written, designed, and published for you, including Google Business posts.",
  "url": "https://wingdigitalco.com/social-media.html",
- "provider": {
- "@type": "ProfessionalService",
- "name": "Wing Digital",
- "url": "https://wingdigitalco.com/"
- },
+ "provider": {"@id": "https://wingdigitalco.com/#organization"},
  "areaServed": {
  "@type": "AdministrativeArea",
  "name": "Dallas-Fort Worth, TX"
@@ -327,7 +301,7 @@
 </footer>
 <!-- FOOTER:END -->
 
-<script src="assets/piece-engine.js?v=ed9fb4ab" defer></script>
+<script src="assets/piece-engine.js?v=e0b15955" defer></script>
 <script src="assets/site.js?v=624b38a8" defer></script>
 </body>
 </html>

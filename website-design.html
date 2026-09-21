@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
@@ -23,25 +24,7 @@
 {
  "@context": "https://schema.org",
  "@type": "ProfessionalService",
- "name": "Wing Digital",
- "url": "https://wingdigitalco.com/",
- "logo": "https://wingdigitalco.com/assets/wing-digital-logo.png",
- "slogan": "Automate your success",
- "address": {"@type": "PostalAddress","addressLocality": "Plano","addressRegion": "TX","addressCountry": "US"},
- "areaServed": [
-  {"@type": "City","name": "Plano, TX"},
-  {"@type": "City","name": "Frisco, TX"},
-  {"@type": "City","name": "McKinney, TX"},
-  {"@type": "City","name": "Allen, TX"},
-  {"@type": "City","name": "Dallas, TX"},
-  {"@type": "City","name": "Fort Worth, TX"},
-  {"@type": "City","name": "Arlington, TX"},
-  {"@type": "City","name": "Irving, TX"},
-  {"@type": "City","name": "Garland, TX"},
-  {"@type": "City","name": "Richardson, TX"},
-  {"@type": "City","name": "Carrollton, TX"},
-  {"@type": "City","name": "Denton, TX"}
- ]
+ "@id": "https://wingdigitalco.com/#organization"
 }
 </script>
 <script type="application/ld+json">
@@ -51,7 +34,7 @@
  "name": "Web Development",
  "description": "Web development for DFW businesses: the get-chosen part of your online presence. One flat monthly rate with hosting, updates, and support included. Live in two weeks.",
  "url": "https://wingdigitalco.com/website-design.html",
- "provider": {"@type": "ProfessionalService","name": "Wing Digital","url": "https://wingdigitalco.com/"},
+ "provider": {"@id": "https://wingdigitalco.com/#organization"},
  "areaServed": {"@type": "AdministrativeArea","name": "Dallas-Fort Worth, TX"}
 }
 </script>
@@ -146,13 +129,13 @@
         <span class="lbl">Health and wellness / DFW</span>
         <h3>Renewal Health</h3>
         <div class="frame" data-piece-nograb><img src="assets/work-renewal-detail.jpg" alt="A Renewal Health service page detail" width="1280" height="889" loading="lazy"></div>
-        <p>A practice that needed to explain a complicated service simply. Most of your traffic arrives on a phone, so that is where we build first.</p>
+        <p>A <a class="tlink" href="work-renewal-health.html">practice that needed to explain a complicated service simply</a>. Most of your traffic arrives on a phone, so that is where we build first.</p>
       </div>
       <div class="wd-shot">
         <span class="lbl">Junk removal / DFW</span>
         <h3>Hero's Junk Removal</h3>
         <div class="frame" data-piece-nograb><img src="assets/work-heros-detail.jpg" alt="A Hero's Junk Removal service page detail" width="1280" height="889" loading="lazy"></div>
-        <p>Nobody plans a junk haul, so the whole job is being the name that comes up when somebody is standing in front of the pile. A service page per kind of haul, and content going out four to five times a week.</p>
+        <p>Nobody plans a <a class="tlink" href="work-heros-junk-removal.html">junk haul</a>, so the whole job is being the name that comes up when somebody is standing in front of the pile. A service page per kind of haul, and content going out four to five times a week.</p>
       </div>
     </div>
     <a class="tlink" href="work.html">See the full case studies <span class="ar" aria-hidden="true">&#8594;</span></a>
@@ -346,7 +329,7 @@
 </footer>
 <!-- FOOTER:END -->
 
-<script src="assets/piece-engine.js?v=ed9fb4ab" defer></script>
+<script src="assets/piece-engine.js?v=e0b15955" defer></script>
 <script src="assets/site.js?v=624b38a8" defer></script>
 </body>
 </html>
