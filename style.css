@@ -342,8 +342,8 @@ body.menu-locked{overflow:hidden}
 .rowlink:focus-visible{outline:none}
 .rowlink:focus-visible::after{outline:2px solid var(--blue-light); outline-offset:var(--space-2); border-radius:var(--radius-1)}
 .svc-row .ar{display:inline-block; margin-top:var(--space-4); color:var(--blue-light); font-size:var(--step-1); line-height:1; transition:transform .2s ease}
-.svc-row:hover .ar{transform:translateX(var(--space-2))}
-.svc-row:hover .rowlink{color:var(--blue-light)}
+.svc-row:hover .ar,.svc-row:focus-within .ar{transform:translateX(var(--space-2))}
+.svc-row:hover .rowlink,.svc-row:focus-within .rowlink{color:var(--blue-light)}
 @media (prefers-reduced-motion: reduce){ .svc-row .ar{transition:none} }
 .tlink{
   display:inline-flex; align-items:center; min-height:var(--target); margin-top:var(--space-3);
@@ -412,9 +412,10 @@ html:not(.js) .step-track{display:none}
 }
 .qa .ic{width:18px; height:18px; position:relative; flex:0 0 auto}
 .qa .ic::before,.qa .ic::after{content:''; position:absolute; background:var(--muted); top:50%; left:50%; transform:translate(-50%,-50%)}
-.qa .ic::before{width:14px; height:2px}
-.qa .ic::after{width:2px; height:14px; transition:transform .2s ease}
+.qa .ic::before{width:14px; height:2px; transition:background .2s ease}
+.qa .ic::after{width:2px; height:14px; transition:transform .2s ease, background .2s ease}
 .qa button[aria-expanded="true"] .ic::after{transform:translate(-50%,-50%) scaleY(0)}
+.qa button:hover .ic::before,.qa button:hover .ic::after{background:var(--blue-light)}
 .qa .ans{padding:0 0 var(--space-5); color:var(--muted)}
 .qa .ans p{margin:0}
 
@@ -498,3 +499,44 @@ footer .base a:hover{color:var(--paper)}
   .band{max-width:52%}
   .interlude--process .band h2{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap}
 }
+
+/* === INTRO (jaswarm r1) === */
+/* First load, homepage only: html.intro-active is set synchronously in <head> (skipped
+   if wingIntroSeen is already in sessionStorage, or prefers-reduced-motion). While it is
+   present, nav + the split words + the tagline stay out of the way of the piece assembling.
+   Hidden with opacity/transform, never display, so no-JS visitors and layout never move. */
+html.intro-active #nav,
+html.intro-active .split-head,
+html.intro-active .hero-line{
+  opacity:0;
+  transform:translateY(10px);
+  pointer-events:none;
+}
+/* the reveal: quick, staggered, no bounce. #nav keeps its existing border-color transition. */
+#nav{transition:border-color .3s ease, opacity .4s ease, transform .4s ease}
+.split-head{transition:opacity .4s ease, transform .4s ease}
+.hero-line{transition:opacity .4s ease, transform .4s ease}
+html:not(.intro-active) .split-head{transition-delay:.15s}
+html:not(.intro-active) .hero-line{transition-delay:.3s}
+@media (prefers-reduced-motion: reduce){
+  html.intro-active #nav,
+  html.intro-active .split-head,
+  html.intro-active .hero-line{opacity:1; transform:none}
+  #nav,.split-head,.hero-line{transition:none}
+}
+
+/* Wing / Digital sat pushed out to the page edges (space-between across the full 1240px
+   .wrap column); pull them into a narrower box so both words stay close to the centred
+   piece instead of the far corners. Still space-between inside that narrower box, so they
+   remain on opposite sides of the piece, just tighter. Mobile portrait already stacks them
+   above/below the piece (untouched here). */
+/* NOTE (jaswarm r1): tightening .split-head max-width alone pulls Wing/Digital onto the
+   centred piece's data-piece-avoid rects, so the engine fragments/shoves the piece to the
+   left. Correct fix = coordinate with piece-engine (shrink/reposition the piece so the whole
+   Wing + piece + Digital lockup reads tighter without collision). Deferred to r2. See BACKLOG. */
+/* jaswarm r2: moderate tightening only (not the r1 attempt's 46rem/50rem, which collided with
+   the piece's avoid rects and made the engine fragment/shove it). Paired with a matching ~5%
+   hero scale reduction in piece-engine.js (v5HeroScale 0.84 -> 0.80) so the piece's rendered
+   footprint sits comfortably inside this narrower box with margin to spare. */
+@media (min-width:821px){ .split-head{max-width:min(74vw, 60rem)} }
+@media (min-width:1440px){ .split-head{max-width:64rem} }

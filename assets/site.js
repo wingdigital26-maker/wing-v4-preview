@@ -6,6 +6,44 @@
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.documentElement.classList.add('js'); /* also set inline in <head> */
 
+  /* ---------- first-load intro: nav + split-head + hero-line stay hidden (class set
+     synchronously in <head>, homepage only) until the piece finishes assembling.
+     Belt and suspenders: reveal fires no matter what the engine does. */
+  (function () {
+    var docEl = document.documentElement;
+    if (!docEl.classList.contains('intro-active')) return;
+
+    var settled = false;
+    var started = false;
+
+    function reveal() {
+      if (settled) return;
+      settled = true;
+      docEl.classList.remove('intro-active');
+      try { sessionStorage.setItem('wingIntroSeen', '1'); } catch (e) {}
+    }
+
+    setTimeout(reveal, 6500); /* suspenders: onDone never called (must exceed the intro length, ~4.8s) */
+
+    function start() {
+      if (started) return;
+      started = true;
+      if (window.WingPiece && typeof window.WingPiece.playIntro === 'function') {
+        try { window.WingPiece.playIntro({ reducedMotion: reduced, onDone: reveal }); }
+        catch (e) { reveal(); }
+      } else {
+        reveal(); /* no engine API at all */
+      }
+    }
+
+    if (window.WingPiece && window.WingPiece.ready) {
+      start();
+    } else {
+      window.addEventListener('wingpiece:ready', start, { once: true });
+      setTimeout(start, 1200); /* suspenders: ready never fires */
+    }
+  })();
+
   /* ---------- nav ---------- */
   var nav = document.getElementById('nav');
   if (nav) {

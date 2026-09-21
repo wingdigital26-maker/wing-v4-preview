@@ -11,6 +11,29 @@
 if(window.__wingPieceEngine) return;
 window.__wingPieceEngine = true;
 
+// ---------- [INTRO API] window.WingPiece: the shell's contract for the first-load intro ----------
+// pieceAPI is set by initPiece() once the live engine is up (null in the poster fallback). playIntro is safe to
+// call the moment 'wingpiece:ready' fires / window.WingPiece.ready is true, whichever path booted.
+window.WingPiece = window.WingPiece || {};
+var pieceAPI = null, pieceReady = false;
+function firePieceReady(){
+  if(pieceReady) return;
+  pieceReady = true;
+  window.WingPiece.ready = true;
+  try{ window.dispatchEvent(new Event('wingpiece:ready')); }catch(_){}
+}
+window.WingPiece.playIntro = function(opts){
+  opts = opts || {};
+  if(pieceAPI && pieceAPI.playIntro){ pieceAPI.playIntro(opts); return; }
+  // [round 8] called before the live engine is up (three.js still loading): remember it, so the flock still plays
+  // the moment the engine arrives instead of the shards sitting parked off-screen forever.
+  window.WingPiece._pendingIntro = true;
+  // no live engine (poster fallback, WebGL/Three unavailable, or called before boot decided): never leave the
+  // shell's content gated on an animation that is not going to happen.
+  try{ requestAnimationFrame(function(){ try{ if(opts.onDone) opts.onDone(); }catch(_){} }); }
+  catch(_){ try{ if(opts.onDone) opts.onDone(); }catch(__){} }
+};
+
 var THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';   // same version as v5
 var ADDONS_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/';
 var SCRIPT_SRC = (document.currentScript && document.currentScript.src) || '';
@@ -467,7 +490,7 @@ const fDrift = new Float32Array(N), fGl = new Float32Array(N);   // slow vertica
 const wakeX = new Float32Array(N), wakeY = new Float32Array(N);
 const order = new Float32Array(N);     // assemble: build order, bottom up, 0..0.97
 const aCluster = new Float32Array(N);  // split4: 0..3 in bands along the mark's own diagonal
-const orbSel = new Uint8Array(N), orbA = new Float32Array(N), orbR = new Float32Array(N), orbY = new Float32Array(N), orbSt = new Float32Array(N);
+const orbSel = new Uint8Array(N), orbA = new Float32Array(N), orbR = new Float32Array(N), orbY = new Float32Array(N), orbSt = new Float32Array(N), orbRXtra = new Float32Array(N);
 
 // deep anodized navy. Metal takes its colour from reflections, so the base has to sit well above the
 // page colour or it reads black; per-plate variation is kept to a few percent of lightness.
@@ -530,10 +553,14 @@ for(let i=0;i<N;i++){
   fPh[i] = Math.random()*Math.PI*2;
   order[i] = THREE.MathUtils.clamp(((r.pos.y/LOGO_H)+0.5)*0.86 + (inn?0:0.05) + Math.random()*0.06, 0, 0.97);
   diagVals[i] = ((r.pos.x/LOGO_W) - (r.pos.y/LOGO_H) + 1)/2;
-  if(!inn && Math.random() < 0.4){
-    orbSel[i] = 1; orbA[i] = Math.random()*Math.PI*2; orbR[i] = 2.85 + Math.random()*0.55 + (Math.random()<0.2?Math.random()*0.5:0);
-    orbY[i] = (Math.random()-0.5)*0.7; orbSt[i] = Math.random();
-  }
+  // [INTRO API round 5] EVERY plate gets ring parameters (so the opening spiral carries the whole piece and
+  // nothing sits in the centre at t=0); orbSel still marks only the 85% non-inner subset that the small
+  // ambient "orbit" chapter lifts. orbRXtra is now a unitless spread (1..1.45) multiplied per frame by the
+  // viewport-aware start radius introR0 (see updatePlates), so the spiral starts beyond the frame on any width.
+  orbA[i] = Math.random()*Math.PI*2; orbR[i] = 2.85 + Math.random()*0.55 + (Math.random()<0.2?Math.random()*0.5:0);
+  orbY[i] = (Math.random()-0.5)*0.7; orbSt[i] = Math.random();
+  orbRXtra[i] = 0.35 + 0.65*Math.sqrt(Math.random());   // [round 7] this plate's radius FRACTION inside the intro field disc (sqrt = uniform over the disc area)
+  if(!inn && Math.random() < 0.85) orbSel[i] = 1;
 }
 { // four clusters: each of the mark's two blocks cut in two by a horizontal plane. Gaps between horizontal slabs are
   // vertical air, which no sway angle can close, so it reads as four from the front at any yaw.
@@ -579,7 +606,7 @@ const EDGE_M = 24;                   // the silhouette keeps at least this many 
 // (region top = 0.55 x topbar bottom, bottom = type stack top - 6; scale = min(0.84 x region, 0.8 x width); centre = region centre),
 // which puts it ABOVE screen centre, seen slightly from below by the fixed camera. This reproduces that region from v5's own CSS
 // (checked against sculpture.html at 18 viewports, within 1px: .ja/engine-test/v5region_r3.py) so the site hero is the same picture.
-function v5HeroScale(W, H){ return Math.min(0.84*(v5Region(W,H).rh/H)*visH/EXT_H, 0.8*visW/EXT_W); }
+function v5HeroScale(W, H){ return Math.min(0.80*(v5Region(W,H).rh/H)*visH/EXT_H, 0.8*visW/EXT_W); }
 // On short viewports v5's own headline and CTA stack (which this page does not have) would squeeze the piece to a sliver.
 // There the hero falls back to the free-rect fit with this floor as its nominal size. Normal desktop and phone viewports
 // sit above the floor, so they keep v5's exact framing.
@@ -1129,9 +1156,12 @@ asmProg = asmTarget; fitScale = scaleTarget;
 // intro: first visit this session the piece lands from the cloud (v5's own intro, about 2 s);
 // later visits a quick settle. Loading mid-page skips it: the plates are simply where the chapter wants them.
 const introParam = qs.get('intro');
+// [INTRO API round 6] Jack wants the intro on EVERY homepage load, so the sessionStorage first-visit gate is gone:
+// firstVisit is true on every load unless ?intro=0 forces the quiet settle. (Reduced motion and the poster
+// fallback are still handled by playIntro / the shell, not here.)
 let firstVisit = true;
-try{ firstVisit = sessionStorage.getItem('wing-piece-intro') !== '1'; sessionStorage.setItem('wing-piece-intro','1'); }catch(_){}
-if(introParam==='1') firstVisit = true; else if(introParam==='0') firstVisit = false;
+try{ sessionStorage.setItem('wing-piece-intro','1'); }catch(_){}
+if(introParam==='0') firstVisit = false;
 const atCentre = (1-Wt.frame-Wt.assemble) > 0.6;
 const skipIntro = !!beatOverride || !atCentre;
 let seam = 0, leak = 0;
@@ -1140,6 +1170,51 @@ if(!skipIntro){
   if(firstVisit){ prog.fill(1); seam = 1; }
   else { prog.fill(0.6); seam = 1; flyClock = 3; autoDur = 1100; }      // later visits: a 0.7 s settle
 } else if(beatOverride) nextBeat(performance.now());
+
+// [INTRO API] on a genuine first-session load the plates above start scattered (prog=1) and then sit frozen,
+// waiting for the shell to call window.WingPiece.playIntro(). Later visits and mid-page loads keep their own
+// quiet settle (untouched) and never gate on the shell at all. Convergence, once playIntro fires, is driven by
+// its OWN deterministic per-plate clock (introConvT below), not by the generic scroll fly/return system: that
+// keeps the landing bounded and provable instead of depending on flyClock/canFly/expanded interactions.
+let introArmed = !skipIntro && firstVisit;
+// [INTRO API round 5] introOrbBoost is 1 for the WHOLE armed intro (waiting + spiral + landing) so every plate is
+// pinned to the ring from the very first painted frame (off-screen) instead of ramping in from the visible scatter
+// cloud; it drops straight to 0 at introDone (all plates are home by then, so nothing jumps).
+let introRunning = false, introCallAt = -1, introOrbBoost = introArmed ? 1 : 0, introDoneCB = null, introDone = false, introReadyFired = false, lastMaxProg = introArmed ? 1 : 0;
+let introConvT = 0, introConvStart = 0;
+// [INTRO API round 5] the opening beat: the screen starts EMPTY (plates parked beyond the viewport corners on a
+// screen-plane ring of radius introR0 x orbRXtra[i], viewport-aware, see updatePlates), then for INTRO_ORBIT_MS each
+// plate (staggered by orbSt[i] over the first INTRO_STAGGER_F of the window) spirals inward, sweeping INTRO_SWEEP
+// radians as its radius eases down to the small orbR ring hugging the form, THEN the deterministic per-plate
+// landing clock below runs. Round 4 was a 1.4s / 288deg ring-in that started visible; now ~2.2s and >1 revolution.
+// [INTRO API round 6] Jack: "all of the pieces spiraling around the screen, then make the logo, smooth". The window is
+// now one continuous radius curve (fractions of INTRO_ORBIT_MS): 0..A_END ease in from off-screen to the big on-screen
+// ring, A_END..C_START dwell swirling at the big ring, C_START..C_END ease down to the small ring; the angle sweeps
+// INTRO_SWEEP (2 full turns) under a single smoother over the same span. Per-plate stagger is a small phase offset.
+// [INTRO API round 7] Jack: "not an actual spiral: pieces moving across the screen in a circular motion, big covering
+// a lot of the screen to small, then into the logo". The plates now fill a DISC (per-plate fraction orbRXtra 0.35..1 of
+// the field radius, own angle), the whole field rotates ~0.8 turn under one smoother, and the field radius eases
+// off-screen -> big -> small over INTRO_ORBIT_MS, then the landing. Fewer hard turns, more flow.
+const FLOCK_LAG = 0.16;
+const INTRO_ORBIT_MS = 1600*(DEBUG ? Math.min(20, Math.max(1, +qs.get("slow")||1)) : 1), INTRO_STAGGER_F = 0.04, INTRO_SWEEP = Math.PI*1.6;
+const INTRO_A_END = 0.22, INTRO_C_START = 0.4, INTRO_C_END = 0.96;
+const INTRO_R0_MARGIN = 1.25/0.35;   // field radius at t=0: the INNERMOST plate (fraction 0.35) sits 1.25 x half-diagonal out, so the first frame is empty
+const INTRO_BIG_K = 0.88;            // big field radius = 0.88 x half-diagonal: outer plates near the corners, inner ones ~30% out -> the disc covers most of the screen
+const INTRO_CONV_STAGGER = 0.45, INTRO_CONV_SPAN = 1.0;   // seconds: per-plate landing clock, staggered along the diagonal (stagger[i])
+function introWaiting(){ return introArmed && !introRunning && !introDone; }
+function introBusy(){ return introArmed && !introDone; }
+// [INTRO API round 4] Jack watched round 3's converge-straight-to-solid-then-3.5s-dead-hold and asked for: spiral in ->
+// assemble LOOSE (the same cracked-open "seam" look the ambient wave/ghost/burst/expand chapters use, which is already
+// what's on screen for free here because seam opens to 1 the instant plates start moving and only eases back to 0 over
+// OPEN_S once the LAST plate's per-plate clock reaches home -- see the seamTarget/seam lines above updatePlates's loop)
+// -> settle to solid over that same natural seam-close -> then go. onDone (nav/words/tagline reveal) fires at
+// INTRO_READ_T, while the mark is still loose but already reads clearly; INTRO_LAND_T is when the last plate is home
+// and the natural seam-close settle begins; INTRO_SETTLE_MS is a short beat covering that settle before ambient
+// breathing is allowed back, replacing the old 3.5s dead hold on solid.
+const INTRO_READ_T = INTRO_CONV_STAGGER + INTRO_CONV_SPAN*0.92;      // ~1.19s into convergence: shards have met, loose mark reads as the logo (chrome stays hidden through the whole spiral)
+const INTRO_LAND_T = INTRO_CONV_STAGGER + INTRO_CONV_SPAN + 0.05;    // ~1.30s into convergence: every plate is home, solid
+const INTRO_SETTLE_MS = 750;                                          // covers seam's ~0.6s close + a hair of buffer
+let introHoldUntil = 0;
 
 const INTRO_HOLD = skipIntro ? 0 : 0.4;   // [STAGE 7] the landing waits until the canvas has faded in enough to be seen
 const smoother = (t)=> t*t*t*(t*(t*6-15)+10);
@@ -1185,6 +1260,7 @@ function updatePlates(dt, now, timeS){
   if(expanded !== lastDir){ lastDir = expanded; flyClock = 0; }
   let maxProg = 0, maxF = 0;
   for(let i=0;i<N;i+=37){ if(prog[i]>maxProg) maxProg = prog[i]; if(fprog[i]>maxF) maxF = fprog[i]; }
+  lastMaxProg = maxProg;   // [INTRO API] sampled landing progress, watched by playIntro's onDone check
   // split4 does NOT open the seams: each slab stays a tight, solid plated block (open seams read as see-through mesh with moire)
   const seamOpen = wF > 0.01 || (wA > 0.01 && asmProg < 0.985) || wO > 0.01;
   const seamTarget = (expanded || maxProg>0.004 || maxF>0.004 || seamOpen) ? 1 : 0;
@@ -1258,6 +1334,31 @@ function updatePlates(dt, now, timeS){
   const fRate = dt/FRAME_S;
   const WRAP2 = FY_WRAP*2;
 
+  // [INTRO API round 5] spiral-in: from the first painted frame until the per-plate landing clock takes over,
+  // every plate rides a screen-plane ring whose radius shrinks from orbR[i]+introR0*orbRXtra[i] (beyond the
+  // viewport corners) down to orbR[i] (the small ring the ambient "orbit" chapter uses) while INTRO_SWEEP of
+  // extra angle unwinds to 0 -- a real revolution AND an inward spiral at once. Untouched (spT=-1, ki=1) on
+  // every other path: ambient orbit chapter, repeat visits, reduced motion.
+  // [INTRO API round 5] spT: -1 = no spiral (ambient/repeat/reduced), 0 = waiting for playIntro (parked off-screen),
+  // 0..1 = spiral window progress. introR0 = viewport half-diagonal in plate units x margin, recomputed per frame
+  // from visW/visH/fitScale so the start radius clears the frame at 1440x900 AND ultrawide (fitScale is the live
+  // group scale, so plate units x fitScale = world units; visW/visH are the world-unit viewport at the group's depth).
+  let spT = -1, introR0 = 0, introRBig = 0;
+  const introRing = introBusy();
+  if(introRing && !introRunning){
+    spT = introCallAt < 0 ? 0 : Math.min(1, (now-introCallAt)/INTRO_ORBIT_MS);
+  }
+  // [round 8] flock clock + viewport half-extents in plate units. Unclamped through the landing.
+  let flT = -1, flW = 0, flH = 0, flS = 0;
+  if(introRing){
+    flT = introCallAt < 0 ? 0 : (now-introCallAt)/INTRO_ORBIT_MS;
+    const fs = Math.max(0.05, fitScale);
+    flW = 0.5*visW/fs; flH = 0.5*visH/fs; flS = Math.min(flW*1.25, flH*1.75);
+  }
+  // [INTRO API round 4] the Wing/Digital wordmark's data-piece-avoid rects would otherwise deflect plates
+  // during the opening spiral/converge/settle and look wrong; suppress that push entirely until the intro
+  // (spiral through the short post-land settle) has fully handed off to the ambient loop.
+  const introAvoidOff = (introArmed && !introDone) || now < introHoldUntil;
   const arr = mesh.instanceMatrix.array;
   let busy = waving||ghosting||bursting||scatterActive>0.01||seam>0||tapOn;
   const dampK = 1-Math.exp(-8*dt);
@@ -1271,7 +1372,14 @@ function updatePlates(dt, now, timeS){
 
     // --- fly progress, in order along the diagonal ---
     let p = prog[i];
-    if(canFly){ if(flyClock > st*FLY_STAGGER + flyDelay[i] && p<1) p = Math.min(1, p + dt/FLY_S); }
+    if(introRunning){
+      // [INTRO API] deterministic landing: a per-plate clock staggered along the same diagonal as everything
+      // else (stagger[i]), so it reads as one continuous build like assemble/frame, not a generic scroll return.
+      const localT = introConvT - st*INTRO_CONV_STAGGER;
+      const cp = localT <= 0 ? 0 : localT >= INTRO_CONV_SPAN ? 1 : localT/INTRO_CONV_SPAN;
+      p = 1 - smoother(cp);
+    } else if(introWaiting()){ /* [INTRO API] scattered and held until playIntro() starts the beat */ }
+    else if(canFly){ if(flyClock > st*FLY_STAGGER + flyDelay[i] && p<1) p = Math.min(1, p + dt/FLY_S); }
     else if(!expanded && p>0){ if(timeS >= INTRO_HOLD && flyClock > st*RET_STAGGER + retDelay[i]) p = Math.max(0, p - dt/RET_S); }
     prog[i] = p;
     const pe = p<=0 ? 0 : p>=1 ? 1 : smoother(p);
@@ -1336,11 +1444,55 @@ function updatePlates(dt, now, timeS){
     // [DIRECTION] split4: clusters slide apart as rigid groups
     if(w4>0){ const k = aCluster[i], m = 1-pe; px += cOX[k]*m; py += cOY[k]*m; pz += cOZ[k]*m; }
     // [DIRECTION] orbit: a share of the skin loosens into a slow ring around the form
-    if(wO>0 && orbSel[i]){
-      let po = wO*1.6 - orbSt[i]*0.6; po = po<=0 ? 0 : po>=1 ? 1 : smoother(po);
+    const wOeff = introOrbBoost > wO ? introOrbBoost : wO;   // [INTRO API] the orbit-in beat borrows the orbit chapter's own ring
+    if(wOeff>0 && (orbSel[i] || introRing)){
+      let po = wOeff*1.6 - orbSt[i]*0.6; po = po<=0 ? 0 : po>=1 ? 1 : smoother(po);
+      // [INTRO API round 5] during the landing each plate leaves the ring exactly as its own clock brings it home
+      // (po follows pe), instead of the whole ring fading while late plates drifted back out to the scatter cloud.
+      if(introRunning) po = pe;
       if(po>0){
-        const a = orbA[i] + timeS*0.17, r = orbR[i];
-        const ox = Math.cos(a)*r, oz = Math.sin(a)*r, oy = orbY[i] + Math.sin(a+0.6)*0.5;
+        // [INTRO API round 5] per-plate spiral ease: staggered start (orbSt) so shards stream in and gather,
+        // all reaching the small ring exactly when the window ends. ki=1 outside the intro (ambient ring unchanged).
+        // [INTRO API round 6] one continuous C1 radius curve per plate: off-screen (introR0 x spread) -> ease in to a
+        // BIG on-screen ring (introRBig x spread, ~56-84% of the half-diagonal) by INTRO_A_END -> dwell there swirling
+        // until INTRO_C_START -> ease down to the small orbR ring by INTRO_C_END. Every segment is smoother()-eased so
+        // the radial velocity is 0 at each joint (no snap); the angle unwinds through INTRO_SWEEP with ONE smoother over
+        // the whole window, so angular speed rises, peaks during the dwell and falls to ~0 exactly as the plate reaches
+        // the ring -- matching the zero-velocity start of the landing clock. ki (plane tilt) follows the final ease.
+        // [INTRO API round 7] NOT a spiral coil: the plates fill a DISC (each at its own fraction orbRXtra[i] of the
+        // field radius, its own angle orbA[i]) and the whole field rotates as one (shared aAdd) with a light organic
+        // wobble, while the field radius eases off-screen -> big (covers the screen) -> small, then hands to the landing.
+        // [INTRO API round 8] Jack: no spiral, no circle. A MURMURATION: the shards are one flock that enters from
+        // off-screen, swoops across the screen and back, breathing and folding, then gathers over the mark and lands.
+        // Each plate follows the same flight path with its own small lag (orbSt), so leaders bank first and the body
+        // trails behind them. flT keeps running through the landing so laggards finish the path as they come home.
+        let ox, oy, oz;
+        if(flT >= 0){
+          const rf = orbRXtra[i], a0 = orbA[i];
+          let tau = flT - orbSt[i]*FLOCK_LAG; tau = tau<0 ? 0 : tau>1 ? 1 : tau;
+          const amp = tau <= 0.58 ? 1 : 1 - smoother((tau-0.58)/0.42);          // path amplitude: full, then home to centre
+          const ent = tau >= 0.24 ? 0 : 1 - smoother(tau/0.24);                 // entry: starts beyond the left edge
+          // [round 9] two half-flocks: one pours in from the left edge, one from the right; they sweep THROUGH each other,
+          // swing back and merge over the mark. Straight crossing passes with a wave, no circular travel.
+          const side = Math.cos(a0) >= 0 ? 1 : -1;
+          const cx = side*(flW*0.55*Math.cos(tau*7.6)*amp + flW*2.7*ent);
+          const cy = flH*0.32*Math.sin(tau*9.5 + side*1.3)*amp;
+          const g = smoother(tau);                                              // body: wide flock -> tight cloud over the mark
+          const br = Math.sin(tau*10.5 + 0.8);                                  // breathing: stretches on the run, bunches on the turn
+          const S = flS + (orbR[i]*0.9/rf - flS)*g;
+          const tw = a0 + 0.35*Math.sin(tau*6.0) + 0.25*Math.sin(timeS*1.1 + orbSt[i]*6.28);
+          // shape morph: the body shifts between a round cloud and a long banking ribbon / crescent as it flies
+          const mo = 0.5 + 0.5*Math.sin(tau*13 + 1.2), c1 = Math.cos(tw), s1 = Math.sin(tw);
+          const bx = c1*rf*S*(1 + 0.45*br*(1-g)), by = s1*rf*S*(0.62 - 0.22*br)*(1 - 0.3*g);
+          const rx2 = c1*rf*S*1.25, ry2 = s1*rf*S*0.16 + Math.sin(c1*rf*2.6 + tau*9)*S*0.34;
+          const mk = mo*(1-g);
+          ox = cx + bx + (rx2-bx)*mk;
+          oy = cy + by + (ry2-by)*mk;
+          oz = Math.sin(a0*2 + tau*5)*0.5*(0.4 + g);
+        } else {
+          const a = orbA[i] + timeS*0.17, r = orbR[i];
+          ox = Math.cos(a)*r; oy = orbY[i] + Math.sin(a)*0.5; oz = Math.sin(a)*r;
+        }
         px += (ox-px)*po; py += (oy-py)*po; pz += (oz-pz)*po;
         if(po>out) out = po;
       }
@@ -1387,7 +1539,7 @@ function updatePlates(dt, now, timeS){
       // text rects are hard exclusion zones for anything that is not seated in the form: in flight (ex counts from the very
       // first sideways move), in the cloud, in the intro, and at rest in the frame when a word reaches into the gutter
       const loose = out > ex ? out : ex, ringOnly = fp<=0 && ((pe<=0 && wO>0) || freeRect !== null);   // the ring, and a cloud already held inside the free rect
-      if(avN>0 && loose>0.02){
+      if(avN>0 && loose>0.02 && !introAvoidOff){
         const persp = (CAM_D - wZ)/CAM_D, sxn = wX/(halfVW*persp); let syn = wY/(halfVH*persp);
         for(let a=0;a<avN;a++){
           // near plates are drawn larger, so the zone grows with nearness; the sideways ramp lies OUTSIDE the text, so the push is full by the first glyph
@@ -1479,6 +1631,33 @@ function frame(){
   fpsFrames++; fpsTime += dt;
   if(fpsTime>0.5){ fpsNow = Math.round(fpsFrames/fpsTime); window.__fps = fpsNow; fpsFrames=0; fpsTime=0; }
 
+  // [INTRO API] advance the orbit-in beat then the deterministic landing clock (both independent of scroll),
+  // and fire onDone exactly once, on the frame the last plate's clock reaches home.
+  if(introCallAt >= 0){
+    introOrbBoost = 1;   // [INTRO API round 5] ring pinned for the whole intro; per-plate po follows pe during the landing
+    if(!introRunning){
+      const el = now - introCallAt;
+      // [round 10] the landing starts while the flock is still in flight (no gather-and-pause): each shard peels off its
+      // moving path and eases home, so flight and logo are one continuous motion.
+      if(el >= INTRO_ORBIT_MS*0.62){ introRunning = true; introConvStart = now; introConvT = 0; }
+    } else {
+      introConvT = (now - introConvStart)/1000;
+    }
+    // [INTRO API round 5] onDone fires only once the shards have met in the middle and the (still loose) mark
+    // reads as the logo: never during the empty start or the spiral, so chrome stays hidden through the sweep.
+    if(introRunning && !introReadyFired && introConvT >= INTRO_READ_T){
+      introReadyFired = true;
+      const cb = introDoneCB; introDoneCB = null;
+      if(cb){ try{ cb(); }catch(_){} }
+    }
+    // the last plate is home: flip introDone (releases text-avoid + intro-only gating) and give the natural
+    // seam-close settle a short window before ambient breathing is allowed back.
+    if(introRunning && !introDone && introConvT >= INTRO_LAND_T){
+      introDone = true; introCallAt = -1; introOrbBoost = 0;
+      introHoldUntil = now + INTRO_SETTLE_MS;
+    }
+  }
+
   // ---- [DIRECTION] scroll -> chapter weights, damped ----
   if(docH !== document.documentElement.scrollHeight) measure();
   computeWeights(); stepCluster(now);
@@ -1502,7 +1681,7 @@ function frame(){
   const spinning = Math.abs(yawVel)>0.25 || Math.abs(pitchVel)>0.25;
   if(!dragging && spinning) lastInteract = now;               // a flick counts as his until it settles
   const userInteracting = dragging || (now-lastInteract) < RESUME_MS;
-  const autopilotOn = !paused && !userInteracting;
+  const autopilotOn = !paused && !userInteracting && !introBusy() && now >= introHoldUntil;   // [INTRO API] no beat fights the landing, then a still beat once it has formed
 
   // ---- orientation = base (autopilot sway OR where he put it) + pointer lean + float ----
   if(!paused){
@@ -1584,6 +1763,28 @@ if(DEBUG) window.__piece = {state:'hero', next:null, progress:0, fps:0, plates:N
   reset(){ expanded = false; userExpanded = false; lastInteract = performance.now(); }};
 updatePlates(0, performance.now(), 0);
 frame();
+
+// [INTRO API] window.WingPiece.playIntro: orbit-in beat then converge to the exact hero rest state, once,
+// on a genuine first-session load. Idempotent: safe to call again while running or after it has finished.
+function playIntro(opts){
+  opts = opts || {};
+  const done = function(){ try{ if(opts.onDone) opts.onDone(); }catch(_){} };
+  if(opts.reducedMotion){
+    introArmed = false; introRunning = false; introCallAt = -1; introOrbBoost = 0; introDone = true;
+    prog.fill(0); seam = 0; flyClock = 3; lastMaxProg = 0;
+    try{ requestAnimationFrame(done); }catch(_){ done(); }
+    return;
+  }
+  if(!introArmed || introDone){ try{ requestAnimationFrame(done); }catch(_){ done(); } return; }
+  if(introCallAt >= 0){ introDoneCB = opts.onDone || introDoneCB; return; }   // already playing: adopt the newest callback
+  introDoneCB = opts.onDone || null;
+  introCallAt = performance.now();
+}
+pieceAPI = {playIntro: playIntro};
+// [round 8] never leave the piece parked: play a call that arrived early, and self-start if the shell never calls.
+if(window.WingPiece._pendingIntro) playIntro({});
+else setTimeout(function(){ if(introWaiting()) playIntro({}); }, 1500);
+
 return {plates:N};
 }
 
@@ -1592,7 +1793,7 @@ function boot(){
   var stage = makeStage();
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(qs.get('poster')==='1') reduced = true;                     // test hook for the fallback
-  if(reduced || !hasWebGL()){ showPosters(stage, true); return; }
+  if(reduced || !hasWebGL()){ showPosters(stage, true); firePieceReady(); return; }
   // same importmap v5 uses; added only when the page has none. The engine also falls back to the full URL.
   if(!document.querySelector('script[type="importmap"]')){
     try{
@@ -1605,12 +1806,13 @@ function boot(){
   function start(){
     import(THREE_URL).then(function(THREE){
       clearTimeout(slow);
-      try{ initPiece(THREE, stage); }
-      catch(err){ if(window.console) console.warn('[piece-engine] init failed, showing posters', err); var c = stage.querySelector('canvas'); if(c) c.remove(); showPosters(stage, true); }
+      try{ initPiece(THREE, stage); firePieceReady(); }
+      catch(err){ if(window.console) console.warn('[piece-engine] init failed, showing posters', err); var c = stage.querySelector('canvas'); if(c) c.remove(); showPosters(stage, true); firePieceReady(); }
     }).catch(function(err){
       clearTimeout(slow);
       if(window.console) console.warn('[piece-engine] three.js did not load, showing posters', err);
       showPosters(stage, true);
+      firePieceReady();
     });
   }
   requestAnimationFrame(function(){ requestAnimationFrame(function(){
